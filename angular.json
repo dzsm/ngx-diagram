@@ -125,6 +125,46 @@
           }
         }
       }
+    },
+    "ngx-diagram": {
+      "root": "projects/ngx-diagram",
+      "sourceRoot": "projects/ngx-diagram/src",
+      "projectType": "library",
+      "prefix": "ngx",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ngx-diagram/tsconfig.lib.json",
+            "project": "projects/ngx-diagram/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "project": "projects/ngx-diagram/ng-package.prod.json"
+            }
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngx-diagram/src/test.ts",
+            "tsConfig": "projects/ngx-diagram/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-diagram/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ngx-diagram/tsconfig.lib.json",
+              "projects/ngx-diagram/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }
   },
   "defaultProject": "ngx-diagram-example"
