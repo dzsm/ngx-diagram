@@ -15,25 +15,26 @@ export class AppComponent {
     @ViewChild('diagram') diagram: NgxDiagramComponent;
     selection = [];
 
+    nodes = [];
+    links = [];
+
     ngOnInit() {
 
-        const externalNodes = [];
         for (let i = 0; i < 10; i++) {
             const idl = id();
-            externalNodes.push({id: idl});
+            this.nodes.push({id: idl});
             this.diagram.addNodeTo({id: idl}, (Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000);
 
         }
-        const externalLinks = [];
-        externalNodes.forEach(source => {
+        this.nodes.forEach(source => {
             for (let i = 0; i < 1; i++) {
-                const target = externalNodes[Math.floor(Math.random() * externalNodes.length)];
-                externalLinks.push({source: source.id, target: target.id});
+                const target = this.nodes[Math.floor(Math.random() * this.nodes.length)];
+                this.links.push({source: source.id, target: target.id});
             }
         });
 
 
-        this.diagram.addData([], externalLinks);
+        this.diagram.addData([], this.links);
     }
 
     connected(connection) {
@@ -43,11 +44,17 @@ export class AppComponent {
     }
 
     created(creation) {
-        this.diagram.addNodeTo({id: id()}, creation.x, creation.y);
+        const node = {id: id()};
+        this.nodes.push(node);
+        this.diagram.addNodeTo({id: node.id}, creation.x, creation.y);
     }
 
     selected(selection) {
         this.selection = selection;
     }
 
+    deleteSelected() {
+        this.nodes = this.nodes.filter(node => !this.selection.find(n => node.id === n.id));
+        this.diagram.updateNodes(this.nodes);
+    }
 }
