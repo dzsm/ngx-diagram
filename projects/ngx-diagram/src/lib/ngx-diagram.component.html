@@ -1,5 +1,5 @@
 <div class="editor"
-     mouseWheel (mouseWheelUp)="zoomWheel($event, ZOOM_IN)" (mouseWheelDown)="zoomWheel($event, ZOOM_OUT)">
+     mouseWheel (mouseWheelUp)="zoomWheel($event, _ZOOM_IN)" (mouseWheelDown)="zoomWheel($event, _ZOOM_OUT)">
     <svg class="svg-layer">
         <defs>
             <marker id="marker-arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"
@@ -19,9 +19,9 @@
                 <path d="M 0 0 L 0.5 0.5 L 0 1 L 0.4 1 L 0.9 0.5 L 0.4 0 z"/>
             </marker>
         </defs>
-        <svg:g class="svg-world" [attr.transform]="transformSVG">
-            <svg:path class="svg-path-link" *ngIf="_mode === _MODE_LINK" [attr.d]="d(_modeLinkPath)"/>
-            <svg:path class="svg-path-edge" *ngFor="let item of _links | keyvalue" [attr.d]="d(item.value.path)"/>
+        <svg:g class="svg-world" [attr.transform]="_matrixSVG">
+            <svg:path class="svg-path-link" *ngIf="_mode === _MODE_LINK" [attr.d]="_d(_modeLinkPath)"/>
+            <svg:path class="svg-path-edge" *ngFor="let item of _links | keyvalue" [attr.d]="_d(item.value.path)"/>
             <svg:rect class="svg-rect-select" *ngIf="_mode === _MODE_SELECT" [attr.x]="_modeSelectRect.x"
                       [attr.y]="_modeSelectRect.y" [attr.width]="_modeSelectRect.w" [attr.height]="_modeSelectRect.h"/>
             <!-- <svg:g *ngFor="let ns of _pathFinder.grid.nodes">
@@ -31,7 +31,7 @@
         </svg:g>
     </svg>
     <div class="div-layer" #divLayerRef>
-        <div class="div-world" [style.transform]="transformCSS">
+        <div class="div-world" [style.transform]="_matrixCSS">
             <div class="div-area" (mousedown)="onAreaMouseDown($event)"></div>
             <div class="div-node" (mousedown)="onNodeMouseDown($event, item.key)"
                  (mousemove)="onNodeMouseMove($event, item.key)"
@@ -39,7 +39,7 @@
                  *ngFor="let item of _nodes | keyvalue" [id]="item.key" #nodeElementRefs
                  [style.top.px]="item.value.y" [style.left.px]="item.value.x">
                 <ng-template [ngTemplateOutlet]="templateRef"
-                             [ngTemplateOutletContext]="{node: item.value.external}"></ng-template>
+                             [ngTemplateOutletContext]="{node: item.value.external, id: item.key, selected: item.value.selected}"></ng-template>
             </div>
         </div>
     </div>

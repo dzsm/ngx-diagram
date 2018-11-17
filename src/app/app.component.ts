@@ -56,5 +56,6 @@ export class AppComponent {
     deleteSelected() {
         this.nodes = this.nodes.filter(node => !this.selection.find(n => node.id === n.id));
         this.diagram.updateNodes(this.nodes);
+        this.selection = [];
     }
 }

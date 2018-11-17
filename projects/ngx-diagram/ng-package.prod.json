@@ -3,5 +3,8 @@
   "dest": "../../dist/ngx-diagram",
   "lib": {
     "entryFile": "src/public_api.ts"
-  }
+  },
+  "whitelistedNonPeerDependencies": [
+    "transformation-matrix"
+  ]
 }

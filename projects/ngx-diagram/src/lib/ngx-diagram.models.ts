@@ -222,6 +222,21 @@ export interface IDimension {
 
 export interface INode {
     id: string;
+    ports?: any;
+}
+
+export interface ILink {
+    id?: string;
+
+    source: string;
+    sourcePort?: string;
+    target: string;
+    targetPort?: string;
+}
+
+
+export interface IInternalNode {
+    id: string;
 
     x: number;
     y: number;
@@ -231,9 +246,12 @@ export interface INode {
     ports: Map<string, IPort>;
     links: Set<string>;
 
+    selected: boolean;
+
+    external: INode;
 }
 
-export interface ILink {
+export interface IInternalLink {
     id: string;
 
     source: string;
@@ -242,5 +260,7 @@ export interface ILink {
     targetPort: string;
 
     path: Array<IPoint>;
+
+    external: ILink;
 }
 

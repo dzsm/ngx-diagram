@@ -25,7 +25,7 @@ import {
 import {
     IMatrix,
     Rectangle,
-    IPoint, IVector, Vector, IRectangle, IPort, IDimension,
+    IPoint, IVector, Vector, IRectangle, IPort, IDimension, INode, ILink, IInternalNode, IInternalLink,
 } from './ngx-diagram.models';
 
 
@@ -40,8 +40,8 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     _MIN_ZOOM = 0.1;
     _MAX_ZOOM = 5;
-    ZOOM_IN = 1.1;
-    ZOOM_OUT = 0.9;
+    _ZOOM_IN = 1.1;
+    _ZOOM_OUT = 0.9;
 
     // MODE NONE: Does nothing
     _MODE_NONE = 0;
@@ -53,13 +53,14 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     // MODE LINK: Connecting two objects
     _MODE_LINK = 2;
     _modeLinkNodeId: string;
+    _modeLinkPort: string;
     _modeLinkPath = [];
 
     // MODE PAN: Panning
     _MODE_PAN = 3;
     _matrix: IMatrix = identity();
-    transformSVG: string;
-    transformCSS: string;
+    _matrixSVG: string;
+    _matrixCSS: string;
 
     // MODE SELECT: Selecting with a rectangle
     _MODE_SELECT = 4;
@@ -67,6 +68,11 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     _modeSelectRect: IRectangle;
 
     _mode = this._MODE_NONE;
+
+    _links = new Map<string, IInternalLink>();
+    _nodes = new Map<string, IInternalNode>();
+
+    _linkIdsToUpdate = new Set<string>();
 
     @ContentChild(TemplateRef) templateRef: TemplateRef<any>;
 
@@ -76,14 +82,6 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     @Output() connected = new EventEmitter<any>();
     @Output() clicked = new EventEmitter<any>();
     @Output() selected = new EventEmitter<any>();
-
-    @ViewChildren('ql') ql: QueryList<ElementRef>;
-
-    _links = new Map<string, any>();
-    _nodes = new Map<string, any>();
-
-    _linkIdsToUpdate = new Set<string>();
-
 
     _eventPoint(event: MouseEvent): IPoint {
 
@@ -106,21 +104,21 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     }
 
     constructor(private changeDetectorRef: ChangeDetectorRef) {
-        console.log('constructor');
+        // console.log('constructor');
 
     }
 
     ngOnInit() {
-        console.log('ngOnInit');
+        // console.log('ngOnInit');
 
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        console.log('ngOnChanges', changes);
+        // console.log('ngOnChanges', changes);
     }
 
     ngAfterContentInit() {
-        console.log('ngAfterContentInit');
+        // console.log('ngAfterContentInit');
 
     }
 
@@ -130,7 +128,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     }
 
     ngAfterViewInit() {
-        console.log('ngAfterViewInit');
+        // console.log('ngAfterViewInit');
     }
 
     ngAfterViewChecked() {
@@ -144,7 +142,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
             });
         });
         if (this._updateLinks()) {
-            console.log('detectChanges');
+            // console.log('detectChanges');
             this.changeDetectorRef.detectChanges();
         }
         this.changeDetectorRef.reattach();
@@ -152,83 +150,150 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     }
 
     ngOnDestroy() {
-        console.log('ngOnDestroy');
+        // console.log('ngOnDestroy');
 
     }
 
-    addData(externalNodes, externalLinks) {
+
+    _newNode(externalNode: INode): IInternalNode {
+
+        return {
+            id: externalNode.id,
+            x: Math.random() * 300, y: Math.random() * 300,
+            h: 0, w: 0,
+
+            ports: new Map<string, IPort>([['SOURCE', {x: 1, y: 0.5}], ['TARGET', {x: 0, y: 0.5}]]), // todo: originate from externalNode if possible
+            links: new Set<string>(),
+
+            selected: false,
+            external: externalNode
+        }
+    }
+
+    _newLink(externalLink: ILink): IInternalLink {
+
+        const sourcePort = externalLink.sourcePort ? externalLink.sourcePort : 'SOURCE';
+        const targetPort = externalLink.targetPort ? externalLink.targetPort : 'TARGET';
+        const id = externalLink.id || externalLink.source + sourcePort + externalLink.target + targetPort;
+
+        return {
+
+            id: id,
+
+            sourcePort: sourcePort,
+            targetPort: targetPort,
+            source: externalLink.source,
+            target: externalLink.target,
+            path: [],
+
+            external: externalLink
+        };
+
+    }
+
+    addData(externalNodes: Array<INode>, externalLinks: Array<ILink>) {
 
         externalNodes.forEach(node => {
-
-            const id = node.id;
-
-            this._nodes.set(id, {
-                id: id,
-                x: Math.random() * 300, y: Math.random() * 300,
-                h: 0, w: 0,
-
-                ports: new Map<string, IPort>([['SOURCE', {x: 1, y: 0.5}], ['TARGET', {x: 0, y: 0.5}]]),
-                links: new Set<string>(),
-
-                external: node
-            });
-
+            const internalNode = this._newNode(node);
+            this._nodes.set(internalNode.id, internalNode);
         });
 
 
         externalLinks.forEach(link => {
+            const internalLink = this._newLink(link);
 
-            const id = link.source + link.target; // + ports?
-
-            this._links.set(id, {
-                id: id,
-                sourcePort: 'SOURCE',
-                targetPort: 'TARGET',
-                source: link.source,
-                target: link.target,
-                path: [],
-
-                external: link
-            });
+            this._links.set(internalLink.id, internalLink);
 
             const source = this._nodes.get(link.source);
-            source.links.add(id);
+            source.links.add(internalLink.id);
             const target = this._nodes.get(link.target);
-            target.links.add(id);
+            target.links.add(internalLink.id);
 
-            this._linkIdsToUpdate.add(id);
+            this._linkIdsToUpdate.add(internalLink.id);
         });
 
     }
 
-    addNodeTo(externalNode: any, x: number, y: number) {
-        this._nodes.set(externalNode.id, {
-            id: externalNode.id,
-            x: x, y: y,
-            h: 0, w: 0,
+    _deleteLink(linkId: string) {
 
-            ports: new Map<string, IPort>([['SOURCE', {x: 1, y: 0.5}], ['TARGET', {x: 0, y: 0.5}]]),
-            links: new Set<string>(),
+        const link = this._links.get(linkId);
 
-            external: externalNode
+        const source = this._nodes.get(link.source);
+        source.links.delete(linkId);
+
+        const target = this._nodes.get(link.target);
+        target.links.delete(linkId);
+
+        this._links.delete(linkId);
+        this._linkIdsToUpdate.delete(linkId);
+
+    }
+
+    updateNodes(externalNodes: Array<INode>) {
+
+        const externalNodeIdSet = new Set();
+
+        externalNodes.forEach(node => {
+
+            externalNodeIdSet.add(node.id);
+
+            if (this._nodes.has(node.id)) { // todo: future conflict between internal key vs external id
+                this._nodes.get(node.id).external = node; // todo: what about ports ?
+            } else {
+                const internalNode = this._newNode(node);
+                this._nodes.set(internalNode.id, internalNode);
+            }
+
         });
 
+        const scheduleToDelete = [];
+        this._nodes.forEach(node => {
+
+            if (!externalNodeIdSet.has(node.id)) {
+
+                node.links.forEach(linkId => {
+                    this._deleteLink(linkId);
+                });
+
+                scheduleToDelete.push(node.id);
+
+            }
+
+        });
+
+        scheduleToDelete.forEach(id => this._nodes.delete(id));
+
+        this.changeDetectorRef.detectChanges();
+
+
+    }
+
+
+    addNodeTo(externalNode: INode, x: number, y: number) {
+        const internalNode = this._newNode(externalNode);
+        internalNode.x = x;
+        internalNode.y = y;
+        this._nodes.set(internalNode.id, internalNode);
     }
 
     _updateDimension(nodeId: string, d: IDimension) {
 
         const node = this._nodes.get(nodeId);
 
-        if (node.h === d.h && node.w === d.w) {
-            return;
+        if (node) { // queryList is not updating when node from _nodes has deleted
+
+            if (node.h === d.h && node.w === d.w) {
+                return;
+            }
+
+            node.h = d.h;
+            node.w = d.w;
+
+            node.links.forEach(linkId => {
+                this._linkIdsToUpdate.add(linkId);
+            });
+
         }
-
-        node.h = d.h;
-        node.w = d.w;
-
-        node.links.forEach(linkId => {
-            this._linkIdsToUpdate.add(linkId);
-        });
 
     }
 
@@ -274,7 +339,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     }
 
-    d(points: Array<IPoint>): string {
+    _d(points: Array<IPoint>): string {
         if (points.length > 0) {
             let d = `M ${points[0].x} ${points[0].y}`;
             for (var i = 1; i < points.length; i++) {
@@ -303,11 +368,17 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         const r = Rectangle.cornersToTLBR(this._modeSelectStart, this._eventPoint(event));
 
-        const result = Array.from(this._nodes.values()).filter(
-            n => r.x <= n.x && n.x <= r.x + r.w && r.y <= n.y && n.y <= r.y + r.h
-        ).map(n => n.external);
+        const selectionList = [];
 
-        this.selected.emit(result);
+        this._nodes.forEach((node) => {
+            const c = {x: node.x + 0.5 * node.w, y: node.y + 0.5 * node.h};
+            node.selected = r.x <= c.x && c.x <= r.x + r.w && r.y <= c.y && c.y <= r.y + r.h;
+            if (node.selected) {
+                selectionList.push(node.external);
+            }
+        });
+
+        this.selected.emit(selectionList);
 
         this._mode = this._MODE_NONE;
 
@@ -336,9 +407,10 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     //
     // LINKING
     //
-    startLink(event: MouseEvent, id: string) {
+    startLink(event: MouseEvent, id: string, port: string) {
         this._mode = this._MODE_LINK;
         this._modeLinkNodeId = id;
+        this._modeLinkPort = port;
 
     }
 
@@ -346,7 +418,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         const source = this._nodes.get(this._modeLinkNodeId);
 
-        const rs = source.ports.get('SOURCE');
+        const rs = source.ports.get(this._modeLinkPort);
 
         const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
         const pt = this._eventPoint(event);
@@ -355,12 +427,14 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     }
 
-    endLink(event: MouseEvent, id: string) {
+    endLink(event: MouseEvent, id: string, port: string) {
 
 
         this.connected.emit({
             source: this._nodes.get(this._modeLinkNodeId).external,
-            target: this._nodes.get(id).external
+            sourcePort: this._modeLinkPort,
+            target: this._nodes.get(id).external,
+            targetPort: port
         });
         this._mode = this._MODE_NONE;
         this._modeLinkPath = [];
@@ -382,8 +456,8 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
             translate(movement.x, movement.y)
         );
 
-        this.transformSVG = toSVG(this._matrix);
-        this.transformCSS = toCSS(this._matrix);
+        this._matrixSVG = toSVG(this._matrix);
+        this._matrixCSS = toCSS(this._matrix);
     }
 
     endPan(event: MouseEvent) {
@@ -406,8 +480,8 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
                 translate(-p.x, -p.y)
             );
 
-            this.transformSVG = toSVG(this._matrix);
-            this.transformCSS = toCSS(this._matrix);
+            this._matrixSVG = toSVG(this._matrix);
+            this._matrixCSS = toCSS(this._matrix);
 
         }
 
@@ -419,7 +493,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     //
     onAreaMouseDown(event: MouseEvent): void {
 
-        console.log(this._eventPoint(event));
+        // console.log(this._eventPoint(event));
         if (event.ctrlKey) {
             this.clicked.emit(this._eventPoint(event));
         } else if (event.shiftKey) {
@@ -433,7 +507,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     onNodeMouseDown(event: MouseEvent, id: string): void {
 
         if (event.ctrlKey) {
-            this.startLink(event, id);
+            this.startLink(event, id, 'SOURCE');
         } else {
             this.startDrag(event, id);
         }
@@ -470,12 +544,59 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     onNodeMouseUp(event: MouseEvent, id: string): void {
 
         if (this._mode === this._MODE_LINK) {
-            this.endLink(event, id);
+            this.endLink(event, id, 'TARGET');
         } else if (this._mode === this._MODE_SELECT) {
 
         }
 
     }
+
+    onPortMouseDown(event: MouseEvent, id: string, port: string): void {
+
+        this.startLink(event, id, port);
+
+        event.stopPropagation();
+        event.preventDefault();
+
+    }
+
+    onPortMouseMove(event: MouseEvent, id: string, port: string): void {
+
+        if (this._mode === this._MODE_LINK) {
+
+            // special case
+            if (this._modeLinkNodeId !== id) {
+
+                const source = this._nodes.get(this._modeLinkNodeId);
+                const target = this._nodes.get(id);
+
+                const rs = source.ports.get(this._modeLinkPort);
+                const rt = target.ports.get(port);
+
+                const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
+                const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
+
+                this._modeLinkPath = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
+
+            }
+
+            event.stopPropagation();
+            event.preventDefault();
+
+        }
+
+    }
+
+    onPortMouseUp(event: MouseEvent, id: string, port: string): void {
+
+        if (this._mode === this._MODE_LINK) {
+            this.endLink(event, id, port);
+        } else if (this._mode === this._MODE_SELECT) {
+
+        }
+
+    }
+
 
     @HostListener('window:mousemove', ['$event'])
     onWindowMouseMove(event: MouseEvent): void {
