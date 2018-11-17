@@ -1,0 +1,93 @@
+
+.editor {
+  position: relative;
+
+  .div-layer {
+    width: 100%;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    background: transparent;
+
+    .div-world {
+      position: absolute;
+    }
+
+    .div-area { /* panning */
+      width: 10000px;
+      height: 10000px;
+      position: absolute;
+      border: 10px solid black;
+      transform: translate(-5000px, -5000px);
+      background: transparent;
+
+    }
+
+    .div-node {
+      padding: 0;
+      margin: 0;
+      position: absolute;
+      outline: none;
+    }
+
+  }
+
+  .svg-layer {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: transparent;
+    pointer-events: none;
+
+    .svg-world {
+
+    }
+
+    .svg-path-link {
+      stroke: black;
+      stroke-width: 2px;
+      fill: none;
+      marker-start: url(#marker-start);
+      marker-end: url(#marker-end);
+
+    }
+
+    .svg-path-edge {
+      stroke: black;
+      stroke-width: 2px;
+      fill: none;
+      marker-start: url(#marker-start);
+      marker-end: url(#marker-end);
+    }
+
+    .svg-rect-select {
+      stroke: black;
+      stroke-width: 2px;
+      fill: none;
+      stroke-dasharray: 5;
+    }
+
+    #marker-arrow {
+      fill: black;
+
+    }
+    #marker-start {
+      fill: black;
+
+    }
+    #marker-end {
+      fill: black;
+
+    }
+
+    #marker-flow {
+      fill: black;
+    }
+
+  }
+
+}
+
