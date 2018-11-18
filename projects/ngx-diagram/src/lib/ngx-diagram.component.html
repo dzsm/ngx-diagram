@@ -1,5 +1,6 @@
 <div class="editor"
-     mouseWheel (mouseWheelUp)="zoomWheel($event, _ZOOM_IN)" (mouseWheelDown)="zoomWheel($event, _ZOOM_OUT)">
+     mouseWheel (mouseWheelUp)="mouseWheelUpOrDown($event, _ZOOM_IN)"
+     (mouseWheelDown)="mouseWheelUpOrDown($event, _ZOOM_OUT)">
     <svg class="svg-layer">
         <defs>
             <marker id="marker-arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"

@@ -5,6 +5,7 @@
     "entryFile": "src/public_api.ts"
   },
   "whitelistedNonPeerDependencies": [
-    "transformation-matrix"
+    "transformation-matrix",
+    "heap"
   ]
 }

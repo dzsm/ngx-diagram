@@ -28,6 +28,7 @@ import {
     IPoint, IVector, Vector, IRectangle, IPort, IDimension, INode, ILink, IInternalNode, IInternalLink,
 } from './ngx-diagram.models';
 
+import {NgxDiagramPath} from './ngx-diagram.path';
 
 @Component({
     selector: 'ngx-diagram',
@@ -58,7 +59,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     // MODE PAN: Panning
     _MODE_PAN = 3;
-    _matrix: IMatrix = identity();
+    _matrix: IMatrix;
     _matrixSVG: string;
     _matrixCSS: string;
 
@@ -73,6 +74,9 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     _nodes = new Map<string, IInternalNode>();
 
     _linkIdsToUpdate = new Set<string>();
+
+    _pathFinder: any;
+    _diagramLayout: any;
 
 
     //nodes_: Array<INode>;
@@ -130,6 +134,9 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     constructor(private changeDetectorRef: ChangeDetectorRef) {
         // console.log('constructor');
+        this._matrix = identity();
+        this._pathFinder = new NgxDiagramPath();
+        // this._diagramLayout = new Layout(this._nodes, this._links, this._linkIdsToUpdate);
 
     }
 
@@ -437,7 +444,15 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
                 const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
                 const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
 
-                link.path = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
+
+                const path = this._pathFinder.find({x: ps.x + 25, y: ps.y}, {
+                    x: pt.x - 25,
+                    y: pt.y
+                }, this._nodes.values());
+
+                link.path = [ps, ...path, pt];
+
+                // link.path = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
             });
 
             this._linkIdsToUpdate.clear();
@@ -578,7 +593,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     //
     // ZOOMING
     //
-    zoomWheel(event: MouseEvent, f: number): void {
+    mouseWheelUpOrDown(event: MouseEvent, f: number): void {
 
         if (this._MIN_ZOOM <= this._matrix.a * f && this._matrix.a * f <= this._MAX_ZOOM) {
 

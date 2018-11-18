@@ -1,6 +1,7 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgxDiagramComponent} from 'ngx-diagram';
+import {NgxDiagramComponent} from "../../projects/ngx-diagram/src/lib/ngx-diagram.component";
 
+//import {NgxDiagramComponent} from 'ngx-diagram';
 
 function id() {
     return '' + Math.random().toString(36).substr(2, 9);

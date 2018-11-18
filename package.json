@@ -8,7 +8,13 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "build_lib": "ng build ngx-diagram --prod",
+    "copy-license": "cp ./LICENSE ./dist/ngx-diagram",
+    "copy-readme": "cp ./README.md ./dist/ngx-diagram",
+    "copy-files": "npm run copy-license && npm run copy-readme",
+    "npm_pack": "cd dist/ngx-diagram && npm pack",
+    "package": "npm run build_lib && npm run copy-files && npm run npm_pack"
   },
   "private": true,
   "dependencies": {
@@ -22,6 +28,7 @@
     "@angular/platform-browser-dynamic": "^6.0.3",
     "@angular/router": "^6.0.3",
     "core-js": "^2.5.4",
+    "heap": "^0.2.6",
     "rxjs": "^6.0.0",
     "transformation-matrix": "^1.14.1",
     "zone.js": "^0.8.26"
