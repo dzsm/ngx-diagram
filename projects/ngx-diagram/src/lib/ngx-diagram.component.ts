@@ -3,7 +3,7 @@ import {
     AfterContentInit, AfterViewChecked, AfterViewInit, ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component, ContentChild,
-    ElementRef, EventEmitter, HostListener, OnChanges, OnDestroy,
+    ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy,
     OnInit, Output,
     QueryList,
     SimpleChanges, TemplateRef, ViewChild,
@@ -73,6 +73,31 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     _nodes = new Map<string, IInternalNode>();
 
     _linkIdsToUpdate = new Set<string>();
+
+
+    //nodes_: Array<INode>;
+    //links_: Array<ILink>;
+
+    // @Input('nodes') set nodes(nodes: Array<INode>) {
+    //this.nodes_ = nodes;
+    //   this.updateNodes(nodes);
+    //   }
+    // get nodes() {
+    //     return this.nodes_;
+    // }
+
+    //   @Input('links') set links(links: Array<ILink>) {
+    // this.links_ = links;
+    // console.log(links);
+    //     this.updateLinks(links);
+    //   console.log(this._links);
+
+    //  this.changeDetectorRef.detectChanges();
+    //  }
+    // get links() {
+    //     return this.links_;
+    // }
+    // */
 
     @ContentChild(TemplateRef) templateRef: TemplateRef<any>;
 
@@ -174,7 +199,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         const sourcePort = externalLink.sourcePort ? externalLink.sourcePort : 'SOURCE';
         const targetPort = externalLink.targetPort ? externalLink.targetPort : 'TARGET';
-        const id = externalLink.id || externalLink.source + sourcePort + externalLink.target + targetPort;
+        const id = externalLink.id || (externalLink.source + sourcePort + externalLink.target + targetPort);
 
         return {
 
@@ -194,38 +219,52 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     addData(externalNodes: Array<INode>, externalLinks: Array<ILink>) {
 
         externalNodes.forEach(node => {
-            const internalNode = this._newNode(node);
-            this._nodes.set(internalNode.id, internalNode);
+            this._addNode(node);
         });
 
-
         externalLinks.forEach(link => {
-            const internalLink = this._newLink(link);
-
-            this._links.set(internalLink.id, internalLink);
-
-            const source = this._nodes.get(link.source);
-            source.links.add(internalLink.id);
-            const target = this._nodes.get(link.target);
-            target.links.add(internalLink.id);
-
-            this._linkIdsToUpdate.add(internalLink.id);
+            this._addLink(link);
         });
 
     }
 
-    _deleteLink(linkId: string) {
+    _addNode(node) {
+        const internalNode = this._newNode(node);
+        this._nodes.set(internalNode.id, internalNode);
 
-        const link = this._links.get(linkId);
+    }
+
+    _addLink(link) {
+
+        const internalLink = this._newLink(link);
+
+        this._links.set(internalLink.id, internalLink);
 
         const source = this._nodes.get(link.source);
-        source.links.delete(linkId);
+        source.links.add(internalLink.id);
+        const target = this._nodes.get(link.target);
+        target.links.add(internalLink.id);
+
+        this._linkIdsToUpdate.add(internalLink.id);
+    }
+
+    _deleteLink(link: IInternalLink) {
+
+        const source = this._nodes.get(link.source);
+        source.links.delete(link.id);
 
         const target = this._nodes.get(link.target);
-        target.links.delete(linkId);
+        target.links.delete(link.id);
 
-        this._links.delete(linkId);
-        this._linkIdsToUpdate.delete(linkId);
+        this._links.delete(link.id);
+        this._linkIdsToUpdate.delete(link.id);
+
+    }
+
+    _deleteLinkById(linkId: string) {
+
+        const link = this._links.get(linkId);
+        this._deleteLink(link);
 
     }
 
@@ -252,7 +291,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
             if (!externalNodeIdSet.has(node.id)) {
 
                 node.links.forEach(linkId => {
-                    this._deleteLink(linkId);
+                    this._deleteLinkById(linkId);
                 });
 
                 scheduleToDelete.push(node.id);
@@ -268,12 +307,84 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     }
 
+    updateLinks(externalLinks: Array<ILink>) {
+
+        const externalLinkIdSet = new Set(externalLinks.map(link => {
+            const sourcePort = link.sourcePort ? link.sourcePort : 'SOURCE';
+            const targetPort = link.targetPort ? link.targetPort : 'TARGET';
+            const id = link.id || (link.source + sourcePort + link.target + targetPort);
+            return id;
+        }));
+
+        const linkIdsToDelete = Array.from(this._links.keys()).filter(id => !externalLinkIdSet.has(id));
+
+        linkIdsToDelete.forEach(id => {
+            this._deleteLinkById(id);
+        });
+
+        externalLinks.forEach(link => {
+
+            const sourcePort = link.sourcePort ? link.sourcePort : 'SOURCE';
+            const targetPort = link.targetPort ? link.targetPort : 'TARGET';
+            const id = link.id || (link.source + sourcePort + link.target + targetPort);
+
+            if (this._links.has(id)) { // todo: future conflict between internal key vs external id
+                this._links.get(id).external = link; // todo: what about ports ?
+            } else {
+                this._addLink(link);
+            }
+
+        });
+
+        /*
+        const scheduleToDelete = [];
+        this._links.forEach(link => {
+
+            if (!externalLinkIdSet.has(link.id)) {
+
+                const source = this._nodes.get(link.source);
+                source.links.delete(link.id);
+
+                const target = this._nodes.get(link.target);
+                target.links.delete(link.id);
+
+                this._linkIdsToUpdate.delete(link.id);
+
+                scheduleToDelete.push(link.id);
+
+            }
+
+        });
+
+        scheduleToDelete.forEach(id => this._links.delete(id));
+
+        */
+        //if (this._updateLinks()) {
+        this.changeDetectorRef.detectChanges();
+        // }
+
+    }
 
     addNodeTo(externalNode: INode, x: number, y: number) {
         const internalNode = this._newNode(externalNode);
         internalNode.x = x;
         internalNode.y = y;
         this._nodes.set(internalNode.id, internalNode);
+    }
+
+    moveTo(nodeId: string, x: number, y: number) {
+
+        const node = this._nodes.get(nodeId);
+
+        node.x = x;
+        node.y = y;
+
+        node.links.forEach(linkId => {
+            this._linkIdsToUpdate.add(linkId);
+        });
+
+        this.changeDetectorRef.detectChanges();
+
     }
 
     _updateDimension(nodeId: string, d: IDimension) {

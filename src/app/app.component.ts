@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {NgxDiagramComponent} from 'ngx-diagram';
 
 
@@ -11,7 +11,7 @@ function id() {
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
     @ViewChild('diagram') diagram: NgxDiagramComponent;
     selection = [];
 
@@ -23,9 +23,8 @@ export class AppComponent {
         for (let i = 0; i < 10; i++) {
             const idl = id();
             this.nodes.push({id: idl});
-            this.diagram.addNodeTo({id: idl}, (Math.random() - 0.5) * 1000, (Math.random() - 0.5) * 1000);
-
         }
+
         this.nodes.forEach(source => {
             for (let i = 0; i < 1; i++) {
                 const target = this.nodes[Math.floor(Math.random() * this.nodes.length)];
@@ -33,20 +32,22 @@ export class AppComponent {
             }
         });
 
-
-        this.diagram.addData([], this.links);
+        this.diagram.updateNodes(this.nodes);
+        this.diagram.updateLinks(this.links);
     }
 
     connected(connection) {
         if (connection.source.id !== connection.target.id) {
-            this.diagram.addData([], [{source: connection.source.id, target: connection.target.id}]);
+            this.links.push({source: connection.source.id, target: connection.target.id});
+            this.diagram.updateLinks(this.links);
         }
     }
 
     created(creation) {
         const node = {id: id()};
         this.nodes.push(node);
-        this.diagram.addNodeTo({id: node.id}, creation.x, creation.y);
+        this.diagram.updateNodes(this.nodes);
+        this.diagram.moveTo(node.id, creation.x, creation.y);
     }
 
     selected(selection) {
@@ -55,7 +56,13 @@ export class AppComponent {
 
     deleteSelected() {
         this.nodes = this.nodes.filter(node => !this.selection.find(n => node.id === n.id));
+        this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id || link.target === n.id)));
         this.diagram.updateNodes(this.nodes);
         this.selection = [];
+    }
+
+    deleteLinksBetweenSelected() {
+        this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id) && this.selection.find(n => link.target === n.id)));
+        this.diagram.updateLinks(this.links);
     }
 }
