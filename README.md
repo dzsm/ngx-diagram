@@ -12,7 +12,7 @@ Place your div node into a template as:
 <ngx-diagram #diagram (connected)="connected($event)" (clicked)="created($event)" (selected)="selected($event)">
     <ng-template let-node="node">
     
-    <div>{{node|json}}<div> <!-- This is your div box as a node -->
+    <div>{{node|json}} <!-- This is your div box as a node -->
     </div>
     
     </ng-template>

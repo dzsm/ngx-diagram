@@ -1,6 +1,6 @@
 {
   "name": "ngx-diagram",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "An Angular 6 HTML+SVG based diagram editor component.",
   "keywords": [
     "Angular",
