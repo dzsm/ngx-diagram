@@ -78,31 +78,6 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     _pathFinder: any;
     _diagramLayout: any;
 
-
-    //nodes_: Array<INode>;
-    //links_: Array<ILink>;
-
-    // @Input('nodes') set nodes(nodes: Array<INode>) {
-    //this.nodes_ = nodes;
-    //   this.updateNodes(nodes);
-    //   }
-    // get nodes() {
-    //     return this.nodes_;
-    // }
-
-    //   @Input('links') set links(links: Array<ILink>) {
-    // this.links_ = links;
-    // console.log(links);
-    //     this.updateLinks(links);
-    //   console.log(this._links);
-
-    //  this.changeDetectorRef.detectChanges();
-    //  }
-    // get links() {
-    //     return this.links_;
-    // }
-    // */
-
     @ContentChild(TemplateRef) templateRef: TemplateRef<any>;
 
     @ViewChild('divLayerRef') divLayerRef: ElementRef;
@@ -202,6 +177,14 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
         }
     }
 
+
+    _linkDefaultId(externalLink: ILink): string {
+        const sourcePort = externalLink.sourcePort ? externalLink.sourcePort : '';
+        const targetPort = externalLink.targetPort ? externalLink.targetPort : '';
+        const id = externalLink.id || (externalLink.source + sourcePort + externalLink.target + targetPort);
+        return id;
+    }
+
     _newLink(externalLink: ILink): IInternalLink {
 
         const sourcePort = externalLink.sourcePort ? externalLink.sourcePort : 'SOURCE';
@@ -226,36 +209,38 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     addData(externalNodes: Array<INode>, externalLinks: Array<ILink>) {
 
         externalNodes.forEach(node => {
-            this._addNode(node);
+            this._addNewNode(node);
         });
 
         externalLinks.forEach(link => {
-            this._addLink(link);
+            this._addNewLink(link);
         });
 
     }
 
-    _addNode(node) {
-        const internalNode = this._newNode(node);
+    _addNewNode(externalNode: INode): IInternalNode {
+        const internalNode = this._newNode(externalNode);
         this._nodes.set(internalNode.id, internalNode);
-
+        return internalNode;
     }
 
-    _addLink(link) {
+    _addNewLink(externalLink: ILink): IInternalLink {
 
-        const internalLink = this._newLink(link);
+        const internalLink = this._newLink(externalLink);
 
         this._links.set(internalLink.id, internalLink);
 
-        const source = this._nodes.get(link.source);
+        const source = this._nodes.get(externalLink.source);
         source.links.add(internalLink.id);
-        const target = this._nodes.get(link.target);
+        const target = this._nodes.get(externalLink.target);
         target.links.add(internalLink.id);
 
         this._linkIdsToUpdate.add(internalLink.id);
+
+        return internalLink;
     }
 
-    _deleteLink(link: IInternalLink) {
+    _deleteLink(link: IInternalLink): void {
 
         const source = this._nodes.get(link.source);
         source.links.delete(link.id);
@@ -268,49 +253,51 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     }
 
-    _deleteLinkById(linkId: string) {
+    _deleteLinkById(linkId: string): void {
 
         const link = this._links.get(linkId);
         this._deleteLink(link);
 
     }
 
+    _deleteNode(node: IInternalNode): void {
+
+        node.links.forEach(linkId => {
+            this._deleteLinkById(linkId);
+        });
+
+        this._nodes.delete(node.id);
+
+    }
+
+    _deleteNodeById(nodeId: string): void {
+
+        const node = this._nodes.get(nodeId);
+        this._deleteNode(node);
+
+    }
+
     updateNodes(externalNodes: Array<INode>) {
 
-        const externalNodeIdSet = new Set();
+        const externalNodeIdSet = new Set(externalNodes.map(node => node.id));
+
+        const nodeIdsToDelete = Array.from(this._nodes.keys()).filter(id => !externalNodeIdSet.has(id));
+
+        nodeIdsToDelete.forEach(id => {
+            this._deleteNodeById(id);
+        });
 
         externalNodes.forEach(node => {
-
-            externalNodeIdSet.add(node.id);
 
             if (this._nodes.has(node.id)) { // todo: future conflict between internal key vs external id
                 this._nodes.get(node.id).external = node; // todo: what about ports ?
             } else {
-                const internalNode = this._newNode(node);
-                this._nodes.set(internalNode.id, internalNode);
+                this._addNewNode(node);
             }
 
         });
-
-        const scheduleToDelete = [];
-        this._nodes.forEach(node => {
-
-            if (!externalNodeIdSet.has(node.id)) {
-
-                node.links.forEach(linkId => {
-                    this._deleteLinkById(linkId);
-                });
-
-                scheduleToDelete.push(node.id);
-
-            }
-
-        });
-
-        scheduleToDelete.forEach(id => this._nodes.delete(id));
 
         this.changeDetectorRef.detectChanges();
-
 
     }
 
@@ -338,45 +325,19 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
             if (this._links.has(id)) { // todo: future conflict between internal key vs external id
                 this._links.get(id).external = link; // todo: what about ports ?
             } else {
-                this._addLink(link);
+                this._addNewLink(link);
             }
 
         });
 
-        /*
-        const scheduleToDelete = [];
-        this._links.forEach(link => {
-
-            if (!externalLinkIdSet.has(link.id)) {
-
-                const source = this._nodes.get(link.source);
-                source.links.delete(link.id);
-
-                const target = this._nodes.get(link.target);
-                target.links.delete(link.id);
-
-                this._linkIdsToUpdate.delete(link.id);
-
-                scheduleToDelete.push(link.id);
-
-            }
-
-        });
-
-        scheduleToDelete.forEach(id => this._links.delete(id));
-
-        */
-        //if (this._updateLinks()) {
         this.changeDetectorRef.detectChanges();
-        // }
 
     }
 
     addNodeTo(externalNode: INode, x: number, y: number) {
-        const internalNode = this._newNode(externalNode);
+        const internalNode = this._addNewNode(externalNode);
         internalNode.x = x;
         internalNode.y = y;
-        this._nodes.set(internalNode.id, internalNode);
     }
 
     moveTo(nodeId: string, x: number, y: number) {
@@ -427,7 +388,35 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
     }
 
-    _updateLinks() {
+    _linkPath(source: IInternalNode, sourcePort: string, target: IInternalNode, targetPort: string): Array<IPoint> {
+
+        const rs = source.ports.get(sourcePort);
+        const rt = target.ports.get(targetPort);
+
+        const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
+        const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
+
+
+        const path = this._pathFinder.find({x: ps.x + 25, y: ps.y}, {
+            x: pt.x - 25,
+            y: pt.y
+        }, this._nodes.values());
+
+        return [ps, ...path, pt];
+
+    }
+
+    _halfLinkPath(source: IInternalNode, sourcePort: string, pt: IPoint): Array<IPoint> {
+
+        const rs = source.ports.get(sourcePort);
+
+        const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
+
+        return [ps, {x: ps.x + 25, y: ps.y}, pt];
+
+    }
+
+    _updateLinks(): boolean {
 
         if (this._linkIdsToUpdate.size > 0) {
 
@@ -438,21 +427,8 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
                 const source = this._nodes.get(link.source);
                 const target = this._nodes.get(link.target);
 
-                const rs = source.ports.get(link.sourcePort);
-                const rt = target.ports.get(link.targetPort);
+                link.path = this._linkPath(source, link.sourcePort, target, link.targetPort);
 
-                const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
-                const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
-
-
-                const path = this._pathFinder.find({x: ps.x + 25, y: ps.y}, {
-                    x: pt.x - 25,
-                    y: pt.y
-                }, this._nodes.values());
-
-                link.path = [ps, ...path, pt];
-
-                // link.path = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
             });
 
             this._linkIdsToUpdate.clear();
@@ -543,13 +519,25 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
     whileLink(event: MouseEvent) {
 
         const source = this._nodes.get(this._modeLinkNodeId);
+        const sourcePort = this._modeLinkPort;
+        const pt = this._eventPoint(event); // target point
 
-        const rs = source.ports.get(this._modeLinkPort);
+        this._modeLinkPath = this._halfLinkPath(source, sourcePort, pt);
 
-        const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
-        const pt = this._eventPoint(event);
+    }
 
-        this._modeLinkPath = [ps, {x: ps.x + 30, y: ps.y}, pt];
+    whileLinkOn(event: MouseEvent, id: string, port: string) {
+
+        if (this._modeLinkNodeId !== id) {
+
+            const source = this._nodes.get(this._modeLinkNodeId);
+            const sourcePort = this._modeLinkPort;
+            const target = this._nodes.get(id);
+            const targetPort = port;
+
+            this._modeLinkPath = this._linkPath(source, sourcePort, target, targetPort);
+
+        }
 
     }
 
@@ -644,21 +632,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         if (this._mode === this._MODE_LINK) {
 
-            // special case
-            if (this._modeLinkNodeId !== id) {
-
-                const source = this._nodes.get(this._modeLinkNodeId);
-                const target = this._nodes.get(id);
-
-                const rs = source.ports.get('SOURCE');
-                const rt = target.ports.get('TARGET');
-
-                const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
-                const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
-
-                this._modeLinkPath = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
-
-            }
+            this.whileLinkOn(event, id, 'TARGET');
 
             event.stopPropagation();
             event.preventDefault();
@@ -671,7 +645,6 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         if (this._mode === this._MODE_LINK) {
             this.endLink(event, id, 'TARGET');
-        } else if (this._mode === this._MODE_SELECT) {
 
         }
 
@@ -690,21 +663,7 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
         if (this._mode === this._MODE_LINK) {
 
-            // special case
-            if (this._modeLinkNodeId !== id) {
-
-                const source = this._nodes.get(this._modeLinkNodeId);
-                const target = this._nodes.get(id);
-
-                const rs = source.ports.get(this._modeLinkPort);
-                const rt = target.ports.get(port);
-
-                const ps = {x: source.x + source.w * rs.x, y: source.y + source.h * rs.y};
-                const pt = {x: target.x + target.w * rt.x, y: target.y + target.h * rt.y};
-
-                this._modeLinkPath = [ps, {x: ps.x + 30, y: ps.y}, {x: pt.x - 30, y: pt.y}, pt];
-
-            }
+            this.whileLinkOn(event, id, port);
 
             event.stopPropagation();
             event.preventDefault();
