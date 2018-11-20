@@ -25,8 +25,8 @@
             <svg:path class="svg-path-edge" *ngFor="let item of _links | keyvalue" [attr.d]="_d(item.value.path)"/>
             <svg:rect class="svg-rect-select" *ngIf="_mode === _MODE_SELECT" [attr.x]="_modeSelectRect.x"
                       [attr.y]="_modeSelectRect.y" [attr.width]="_modeSelectRect.w" [attr.height]="_modeSelectRect.h"/>
-            <!-- <svg:g *ngFor="let ns of _pathFinder.grid.nodes">
-                <svg:circle [attr.cx]="n.x*_pathFinder.gridSize.x + _pathFinder.world.x" [attr.cy]="n.y*_pathFinder.gridSize.y + _pathFinder.world.y" r="2" [attr.fill]="n.walkable?'black':'red'"
+            <!-- <svg:g *ngFor="let ns of _diagramPath.grid.nodes">
+                <svg:circle [attr.cx]="n.x*_diagramPath.gridSize.x + _diagramPath.world.x" [attr.cy]="n.y*_diagramPath.gridSize.y + _diagramPath.world.y" r="2" [attr.fill]="n.walkable?'black':'red'"
                             *ngFor="let n of ns"/>
               </svg:g> -->
         </svg:g>

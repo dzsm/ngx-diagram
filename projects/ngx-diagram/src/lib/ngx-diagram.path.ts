@@ -421,16 +421,11 @@ export class NgxDiagramPath {
 
     find(s: IPoint, t: IPoint, rectangles: IterableIterator<IRectangle>) {
 
-        const min = {x: s.x, y: s.y};
-        const max = {x: s.x, y: s.y};
-
-        min.x = t.x < min.x ? t.x : min.x;
-        min.y = t.y < min.y ? t.y : min.y;
-        max.x = t.x > max.x ? t.x : max.x;
-        max.y = t.y > max.y ? t.y : max.y;
+        const min = {x: Math.min(s.x, t.x), y: Math.min(s.y, t.y)};
+        const max = {x: Math.max(s.x, t.x), y: Math.max(s.y, t.y)};
 
         const d = {x: t.x - s.x, y: t.y - s.y};
-        const da = {x: Math.max(Math.abs(d.x), 20), y: Math.max(Math.abs(d.y), 20)};
+        const da = {x: Math.max(Math.abs(d.x), Math.abs(d.y), 25), y: Math.max(Math.abs(d.y), Math.abs(d.x), 25)};
 
         const gh = 25; // approximate grid spacing
         const dag = {x: Math.round(da.x / gh), y: Math.round(da.y / gh)};

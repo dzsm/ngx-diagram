@@ -5,7 +5,9 @@
     "entryFile": "src/public_api.ts"
   },
   "whitelistedNonPeerDependencies": [
+    "elkjs",
     "transformation-matrix",
+    "fast-equals",
     "heap"
   ]
 }
