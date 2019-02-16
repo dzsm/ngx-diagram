@@ -136,7 +136,7 @@ export class NgxDiagramLayout2 {
                         });
                     }
 
-                    //this._graph.e[edge._id] = edge;
+                    this._graph.e[edge._id] = edge;
 
                     //this._linkIdsToUpdateLinkPathRef.add(edge._id);
                 });

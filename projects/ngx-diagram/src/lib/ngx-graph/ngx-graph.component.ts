@@ -524,6 +524,7 @@ export class NgxGraphComponent implements AfterViewChecked {
 
         this._graph.v[v._id] = v;
 
+
         // this.changeDetectorRef.detectChanges();
 
         return v;
@@ -545,6 +546,8 @@ export class NgxGraphComponent implements AfterViewChecked {
             this._graph.v[t._id]._t.push(e._id);
 
             //this.changeDetectorRef.detectChanges();
+
+            this._linkIdsToUpdateLinkPath.add(e._id);
 
             return e;
         }

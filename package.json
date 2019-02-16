@@ -14,7 +14,8 @@
     "copy-readme": "cp ./README.md ./dist/ngx-diagram",
     "copy-files": "npm run copy-license && npm run copy-readme",
     "npm_pack": "cd dist/ngx-diagram && npm pack",
-    "package": "npm run build_lib && npm run copy-files && npm run npm_pack"
+    "package": "npm run build_lib && npm run copy-files && npm run npm_pack",
+    "publish": "npm run package && cd dist/ngx-diagram && npm publish"
   },
   "private": true,
   "dependencies": {
