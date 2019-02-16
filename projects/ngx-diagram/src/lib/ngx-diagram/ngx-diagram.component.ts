@@ -28,10 +28,10 @@ import {
     IMatrix,
     Rectangle,
     IPoint, IVector, Vector, IRectangle, IPort, IDimension, INode, ILink, IInternalNode, IInternalLink,
-} from './ngx-diagram.models';
+} from '../ngx-diagram.models';
 
-import {NgxDiagramPath} from './ngx-diagram.path';
-import {NgxDiagramLayout} from "./ngx-diagram-layout";
+import {NgxDiagramPath} from '../ngx-diagram.path';
+import {NgxDiagramLayout} from "../ngx-diagram-layout";
 
 @Component({
     selector: 'ngx-diagram',
@@ -778,3 +778,4 @@ export class NgxDiagramComponent implements OnInit, AfterViewInit,
 
 
 }
+

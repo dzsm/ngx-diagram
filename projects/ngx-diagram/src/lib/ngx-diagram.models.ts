@@ -264,3 +264,108 @@ export interface IInternalLink {
     external: ILink;
 }
 
+export interface IVertex {
+
+    _id: string;
+
+    _x: number;
+    _y: number;
+
+    _h: number;
+    _w: number;
+
+    _t: Array<string>;
+    _s: Array<string>;
+
+    _m: boolean;
+}
+
+export interface IEdge {
+
+    _id: string;
+
+    _s: number;
+    _t: number;
+
+    _p: Array<IPoint>;
+}
+
+export interface IGraph {
+    v: { [key: string]: IVertex };
+    e: { [key: string]: IEdge };
+}
+
+function id() {
+    return '' + Math.random().toString(36).substr(2, 9);
+}
+
+export function newNode(g: IGraph, v: any) {
+
+    v._id = v._id || id();
+    v._x = v._x || 0;
+    v._y = v._y || 0;
+    v._m = v._m || false;
+
+    v._s = [];
+    v._t = [];
+
+    v._h = v._h || 0;
+    v._w = v._w || 0;
+
+    g.v[v._id] = v;
+
+    return v;
+}
+
+export function newLink(g: IGraph, s: IVertex, t: IVertex, e: any) {
+
+    e._id = s._id + t._id;
+
+    if (!g.e[e._id]) {
+
+        e._path = [];
+
+        e._s = s._id;
+        e._t = t._id;
+
+        g.e[e._id] = e;
+        g.v[s._id]._s.push(e._id);
+        g.v[t._id]._t.push(e._id);
+
+        return e;
+    }
+
+}
+
+export function delLink(g: IGraph, e: IEdge) {
+
+    console.log(e);
+    g.v[e._s]._s = g.v[e._s]._s.filter(item => item !== e._id);
+    g.v[e._t]._t = g.v[e._t]._t.filter(item => item !== e._id);
+
+    delete g.e[e._id];
+
+}
+
+export function delNode(g: IGraph, v: IVertex) {
+
+    v._s.forEach(id => {
+        delLink(g, g.e[id])
+    });
+
+    v._t.forEach(id => {
+        delLink(g, g.e[id])
+    });
+
+    delete g.v[v._id];
+
+}
+
+/*
+const s = newNode(g, {});
+const t = newNode(g, {});
+const l = newLink(g, s, t, {});
+console.log(g, s, t, l);
+delNode(g, s);
+console.log(g);
+*/

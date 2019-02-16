@@ -1,70 +1,56 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgxDiagramComponent} from "../../projects/ngx-diagram/src/lib/ngx-diagram.component";
+import {ChangeDetectionStrategy, Component, OnInit, ViewChild} from '@angular/core';
+//import {NgxDiagramComponent} from "../../projects/ngx-diagram/src/lib/ngx-diagram.component";
+//import {NgxGraphComponent} from "../../projects/ngx-diagram/src/lib/ngx-graph/ngx-graph.component";
 
 //import {NgxDiagramComponent} from 'ngx-diagram';
+import {NgxGraphComponent} from 'ngx-diagram';
 
-function id() {
-    return '' + Math.random().toString(36).substr(2, 9);
-}
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss']
+    styleUrls: ['./app.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
+
 })
 export class AppComponent implements OnInit {
-    @ViewChild('diagram') diagram: NgxDiagramComponent;
+
+    @ViewChild('graph') graph: NgxGraphComponent;
+
     selection = [];
 
-    nodes = [];
-    links = [];
-
     ngOnInit() {
+        this.graph.redraw();
+    }
 
-        this.nodes = [{id: id()}];
-        for (let i = 0; i < 10; i++) {
-            const idl = id();
-            this.nodes.push({id: idl});
-        }
+    data = {v: {}, e: {}};
 
-        this.nodes.forEach(source => {
-            for (let i = 0; i < 1; i++) {
-                const target = this.nodes[Math.floor(Math.random() * this.nodes.length)];
-                if (source.id !== target.id) {
-                    this.links.push({source: source.id, target: target.id});
-                }
-            }
-        });
+    getData() {
+        this.data = this.graph.getGraph();
+    }
 
-        this.diagram.updateNodes(this.nodes); // First the nodes then the links
-        this.diagram.updateLinks(this.links);
-        this.diagram.redraw();
-
-
+    setData() {
+        this.graph.setGraph(this.data);
+        this.graph.redraw();
     }
 
     connected(connection) {
 
-        if (connection.source.id !== connection.target.id) {
-            this.links.push({source: connection.source.id, target: connection.target.id});
-
-            this.diagram.updateLinks(this.links);
-            this.diagram.redraw();
-
+        if (connection.source._id !== connection.target._id) {
+            this.graph.newLink(connection.source, connection.target, {});
+            this.graph.redraw();
         }
 
     }
 
     created(creation) {
 
-        const node = {id: id()};
-        this.nodes.push(node);
+        this.graph.newNode({_x: creation.x, _y: creation.y});
+        this.graph.redraw()
 
-        this.diagram.updateNodes(this.nodes);
-        this.diagram.moveNodeTo(node.id, creation.x, creation.y);
-        this.diagram.redraw();
 
     }
+
 
     selected(selection) {
 
@@ -74,25 +60,113 @@ export class AppComponent implements OnInit {
 
     deleteSelected() {
 
-        this.nodes = this.nodes.filter(node => !this.selection.find(n => node.id === n.id));
-        this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id || link.target === n.id)));
-
-        this.diagram.updateNodes(this.nodes);
-        this.diagram.redraw();
+        this.graph.deleteSelected(this.selection);
+        this.graph.redraw();
         this.selection = [];
 
     }
 
     deleteLinksBetweenSelected() {
 
-        this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id) && this.selection.find(n => link.target === n.id)));
+        this.graph.deleteLinksBetweenSelected(this.selection);
+        this.graph.redraw();
+
+    }
+
+    autoLayout() {
+        this.graph.autoLayout().then(() => {
+            this.graph.redraw();
+        });
+    }
+
+    /*
+
+    @ViewChild('diagram') diagram: NgxDiagramComponent;
+
+selection = [];
+
+nodes = [];
+links = [];
+
+ngOnInit() {
+
+
+    this.nodes = [{id: id()}];
+    for (let i = 0; i < 10; i++) {
+        const idl = id();
+        this.nodes.push({id: idl});
+    }
+
+    this.nodes.forEach(source => {
+        for (let i = 0; i < 1; i++) {
+            const target = this.nodes[Math.floor(Math.random() * this.nodes.length)];
+            if (source.id !== target.id) {
+                this.links.push({source: source.id, target: target.id});
+            }
+        }
+    });
+
+    this.diagram.updateNodes(this.nodes); // First the nodes then the links
+    this.diagram.updateLinks(this.links);
+    this.diagram.redraw();
+
+
+
+}
+
+connected(connection) {
+
+    if (connection.source.id !== connection.target.id) {
+        this.links.push({source: connection.source.id, target: connection.target.id});
 
         this.diagram.updateLinks(this.links);
         this.diagram.redraw();
 
     }
 
-    autoLayout() {
-        this.diagram.autoLayout().then();
-    }
+}
+
+created(creation) {
+
+    const node = {id: id()};
+    this.nodes.push(node);
+
+    this.diagram.updateNodes(this.nodes);
+    this.diagram.moveNodeTo(node.id, creation.x, creation.y);
+    this.diagram.redraw();
+
+}
+
+selected(selection) {
+
+    this.selection = selection;
+
+}
+
+deleteSelected() {
+
+    this.nodes = this.nodes.filter(node => !this.selection.find(n => node.id === n.id));
+    this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id || link.target === n.id)));
+
+    this.diagram.updateNodes(this.nodes);
+    this.diagram.redraw();
+    this.selection = [];
+
+}
+
+deleteLinksBetweenSelected() {
+
+    this.links = this.links.filter(link => !(this.selection.find(n => link.source === n.id) && this.selection.find(n => link.target === n.id)));
+
+    this.diagram.updateLinks(this.links);
+    this.diagram.redraw();
+
+}
+
+autoLayout() {
+    this.diagram.autoLayout().then();
+}
+
+*/
+
 }

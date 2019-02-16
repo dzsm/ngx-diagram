@@ -1,0 +1,47 @@
+<div class="editor"
+     mouseWheel (mouseWheelUp)="mouseWheelUpOrDown($event, _ZOOM_IN)"
+     (mouseWheelDown)="mouseWheelUpOrDown($event, _ZOOM_OUT)">
+    <svg class="svg-layer">
+        <defs>
+            <marker id="marker-arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"
+                    markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L6,3 z"/>
+            </marker>
+            <marker id="marker-start" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto"
+                    markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L5,3 z"/>
+            </marker>
+            <marker id="marker-end" markerWidth="10" markerHeight="10" refX="4" refY="3" orient="auto"
+                    markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L4,6 L4,0 z"/>
+            </marker>
+            <marker id="marker-flow" refX="0" refY="0.5" markerWidth="2" markerHeight="1" orient="auto"
+                    markerUnits="strokeWidth">
+                <path d="M 0 0 L 0.5 0.5 L 0 1 L 0.4 1 L 0.9 0.5 L 0.4 0 z"/>
+            </marker>
+        </defs>
+        <svg:g class="svg-world" [attr.transform]="_matrixSVG">
+            <svg:path class="svg-path-link" *ngIf="_mode === _MODE_LINK" [attr.d]="_d(_modeLinkPath)"/>
+            <svg:path class="svg-path-edge" *ngFor="let item of _graph.e | keyvalue" [attr.d]="_d(item.value._p)"/>
+            <svg:rect class="svg-rect-select" *ngIf="_mode === _MODE_SELECT" [attr.x]="_modeSelectRect.x"
+                      [attr.y]="_modeSelectRect.y" [attr.width]="_modeSelectRect.w" [attr.height]="_modeSelectRect.h"/>
+            <!-- <svg:g *ngFor="let ns of _diagramPath.grid.nodes">
+                <svg:circle [attr.cx]="n.x*_diagramPath.gridSize.x + _diagramPath.world.x" [attr.cy]="n.y*_diagramPath.gridSize.y + _diagramPath.world.y" r="2" [attr.fill]="n.walkable?'black':'red'"
+                            *ngFor="let n of ns"/>
+              </svg:g> -->
+        </svg:g>
+    </svg>
+    <div class="div-layer" #divLayerRef>
+        <div class="div-world" [style.transform]="_matrixCSS">
+            <div class="div-area" (mousedown)="onAreaMouseDown($event)"></div>
+            <div class="div-node" (mousedown)="onNodeMouseDown($event, item.key)"
+                 (mousemove)="onNodeMouseMove($event, item.key)"
+                 (mouseup)="onNodeMouseUp($event, item.key)"
+                 *ngFor="let item of _graph.v | keyvalue" [id]="item.key" #nodeElementRefs
+                 [style.top.px]="item.value._y" [style.left.px]="item.value._x">
+                <ng-template [ngTemplateOutlet]="templateRef"
+                             [ngTemplateOutletContext]="{node: item.value}"></ng-template>
+            </div>
+        </div>
+    </div>
+</div>

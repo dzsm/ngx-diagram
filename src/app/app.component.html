@@ -16,7 +16,7 @@
         <strong>Mouse wheel:</strong> Zoom.
     </div>
 </div>
-
+<!--
 <div style="position: relative; background-color: lightgray; outline: black; margin: 5px;">
     <ngx-diagram #diagram (connected)="connected($event)" (clicked)="created($event)" (selected)="selected($event)">
         <ng-template let-node="node" let-selected="selected">
@@ -43,4 +43,37 @@
     <button (click)="deleteSelected()">DELETE</button>
     <button (click)="deleteLinksBetweenSelected()">DELETE LINKS</button>
     <button (click)="autoLayout()">AUTO LAYOUT</button>
+</div>
+-->
+<div style="position: relative; background-color: lightgray; outline: black; margin: 5px;">
+    <ngx-diagram-simple #graph (connected)="connected($event)" (clicked)="created($event)"
+                        (selected)="selected($event)">
+        <ng-template let-node="node" let-selected="selected">
+
+            <div style="width: 100%; height: 100%; max-width: 400px; min-height: 80px; position: relative;"
+                 [style.backgroundColor]="node._m?'lightPink':'lightskyblue'"
+            >
+                <div style="padding: 10px;">
+                    <div style="padding: 5px; margin: 0px; background: lightgrey;">
+                        <strong>{{node._id}}</strong>
+                    </div>
+                    <div>
+                        <pre style="padding: 5px; margin: 0; color: white; background-color: black; ">{{node|json}}</pre>
+                    </div>
+                </div>
+            </div>
+
+        </ng-template>
+    </ngx-diagram-simple>
+</div>
+<div style=" border: 1px solid black; padding: 5px; margin: 5px;">
+    <h3>Selection:</h3>
+    <pre style="padding: 5px; color: white; background-color: black;">{{selection|json}}</pre>
+    <h3>Data:</h3>
+    <pre style="padding: 5px; color: white; background-color: black;">{{data|json}}</pre>
+    <button (click)="deleteSelected()">DELETE</button>
+    <button (click)="deleteLinksBetweenSelected()">DELETE LINKS</button>
+    <button (click)="autoLayout()">AUTO LAYOUT</button>
+    <button (click)="getData()">GET DATA</button>
+    <button (click)="setData()">SET DATA</button>
 </div>
